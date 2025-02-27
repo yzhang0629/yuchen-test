@@ -17,27 +17,29 @@ export class KibanaService {
             throw new Error('Kibana URL, user name, or password is not set.');
         }
     }
-    async searchTop3(): Promise<any> {
+    async getUser(id: string): Promise<any> {
         try {
             const response = await this.httpService.post(
                 this.kibanaUrl,
                 {
-                  params: {
-                    index: 'hym_match_user',
-                    body: {
-                      size: 5,
-                      query: {
-                        match_all: {},
-                      },
+                    params: {
+                        index: 'hym_match_user',
+                        body: {
+                        size: 5,
+                        query: {
+                            term: {
+                                _id: id,
+                            },
+                        },
+                        },
                     },
-                  },
                 },
                 {
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'kbn-xsrf': 'true',
-                  },
-                  auth: this.auth,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'kbn-xsrf': 'true',
+                    },
+                    auth: this.auth,
                 },
               ).toPromise();
         

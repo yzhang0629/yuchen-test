@@ -1,11 +1,13 @@
-import { Controller, Get } from "@nestjs/common";
+import { Controller, Get, Query } from "@nestjs/common";
 import { KibanaService } from "./es.service";
 
 @Controller('kibana')
 export class KibanaController {
     constructor(private readonly kibanaService: KibanaService) {}
-    @Get('top3')
-    async searchTop3(){
-        return await this.kibanaService.searchTop3();
+    @Get('getUser')
+    async searchById(
+        @Query('id') id:string
+    ){
+        return await this.kibanaService.getUser(id);
     }
 }
