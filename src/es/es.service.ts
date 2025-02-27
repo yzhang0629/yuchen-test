@@ -5,25 +5,18 @@ import { config } from 'dotenv';
 config()
 @Injectable()
 export class KibanaService {
-    private readonly kibanaUrl: string;
-    private readonly auth: { username: string; password: string };
-
+    private readonly kibanaUrl = process.env.KIBANA_URL || "";
+    private readonly userName = process.env.KIBANA_USER_NAME || "";
+    private readonly password = process.env.KIBANA_PWD || "";
+    private readonly auth = {
+        username: this.userName,
+        password: this.password,
+    };
     constructor(private readonly httpService: HttpService) {
-
-        if (!process.env.KIBANA_URL || !process.env.KIBANA_USER_NAME || !process.env.PWD) {
-            throw new Error('Missing required environment variables: KIBANA_URL, KIBANA_USER_NAME, or PWD');
+        if (this.kibanaUrl == "" || this.userName == "" || this.password == "") {
+            throw new Error('Kibana URL, user name, or password is not set.');
         }
-        this.kibanaUrl = process.env.KIBANA_URL;
-        const userName = process.env.KIBANA_USER_NAME;
-        const password = process.env.PWD;
-
-        this.auth = {
-            username: userName,
-            password: password,
-        };
     }
-
-    // test connecting to Kibana and fetching data
     async searchTop3(): Promise<any> {
         try {
             const response = await this.httpService.post(
