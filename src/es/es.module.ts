@@ -1,11 +1,21 @@
-import { Module } from "@nestjs/common";
-import { KibanaController } from "./es.controller";
-import { KibanaService } from "./es.service";
-import { HttpModule } from "@nestjs/axios";
+import { Module } from '@nestjs/common';
+import { ElasticsearchModule } from '@nestjs/elasticsearch';
+import { SearchService } from './es.service';
+import { SearchController } from './es.controller';
+import { config } from 'dotenv';
 
+config();
 @Module({
-    imports: [HttpModule],
-    controllers: [KibanaController],
-    providers: [KibanaService],
+  imports: [
+    ElasticsearchModule.register({
+      node: process.env.ES_NODE,
+      auth: {
+        username: process.env.ES_USERNAME || "",
+        password: process.env.ES_PASSWORD || "",
+      },
+    }),
+  ],
+  providers: [SearchService],
+  controllers: [SearchController],
 })
-export class KibanaModule {}
+export class SearchModule {}
