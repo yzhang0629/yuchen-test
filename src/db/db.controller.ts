@@ -13,4 +13,9 @@ export class DbController {
     async updateUser(@Body() user : any[]) {
         return this.dbService.updateUser(user);
     }
+
+    @Post('parse-user')
+    async parseUser(@Body() user : any[]) {
+        return this.dbService.parseUser(user);
+    }
 }

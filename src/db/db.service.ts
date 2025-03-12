@@ -31,6 +31,30 @@ export class DbService {
         return rows;
     }
 
+    async parseUser(user : any[]): Promise<any> {
+      let firstName = '';
+      let lastName = '';
+      let email = '';
+      let gender = '';
+      const profileEntries: { profile_key: string; profile_value: any }[] = [];
+
+      for (const entry of user) {
+          if (entry.first_name !== undefined) firstName = entry.first_name.length > 0 ? entry.first_name : '';
+          else if (entry.last_name !== undefined) lastName = entry.last_name.length > 0 ? entry.last_name : '';
+          else if (entry.Email !== undefined) email = entry.Email.length > 0 ? entry.Email : '';
+          else if (entry.gender !== undefined) gender = entry.gender.length > 0 ? entry.gender : '';
+          else if (entry.profile_key !== undefined && entry.profile_value !== undefined) {
+              profileEntries.push({
+                  profile_key: entry.profile_key,
+                  profile_value: entry.profile_value,
+              });
+          }
+      }
+
+      return { firstName, lastName, email, gender, profileEntries }
+    }
+
+
     async updateUser(userData: any[]): Promise<any> {
         const {firstName, lastName, email, gender, profileEntries} = parseInput(userData);
         const userNo = Date.now();      // User number needs to be specified?
@@ -80,7 +104,7 @@ export class DbService {
         const insertedId = (result as any).insertId;
 
         const sqlAttribute = `
-            INSERT INTO user_attribute (user_no, profile_key, profile_value, show_profile, created_at, updated_at)
+            INSERT INTO h_user_attribute (user_no, profile_key, profile_value, show_profile, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?)
         `;
         for (const entry of profileEntries) {
@@ -156,30 +180,32 @@ Assuming we are following the format in Kanghao's example:
 ]
 */
 function parseInput(user: any[]): {
-    firstName: string;
-    lastName: string;
-    email: string;
-    gender: string;
-    profileEntries: { profile_key: string; profile_value: any }[];
+  firstName: string;
+  lastName: string;
+  email: string;
+  gender: string;
+  profileEntries: { profile_key: string; profile_value: any }[];
 } {
-    let firstName = '';
-    let lastName = '';
-    let email = '';
-    let gender = '';
-    const profileEntries: { profile_key: string; profile_value: any }[] = [];
+  let firstName = '';
+  let lastName = '';
+  let email = '';
+  let gender = '';
+  const profileEntries: { profile_key: string; profile_value: any }[] = [];
 
-    for (const entry of user) {
-        if (entry.first_name !== undefined) firstName = entry.first_name.length > 0 ? entry.first_name : '';
-        else if (entry.last_name !== undefined) lastName = entry.last_name.length > 0 ? entry.last_name : '';
-        else if (entry.email !== undefined) email = entry.email.length > 0 ? entry.email : '';
-        else if (entry.gender !== undefined) gender = entry.gender.length > 0 ? entry.gender : '';
-        else if (entry.profile_key !== undefined && entry.profile_value !== undefined) {
-            profileEntries.push({
-                profile_key: String(entry.profileEntries.profile_key),
-                profile_value: String(entry.profileEntries.profile_value),
-            });
-        }
-    }
+  for (const entry of user) {
+      if (entry.first_name !== undefined) firstName = entry.first_name.length > 0 ? entry.first_name : '';
+      else if (entry.last_name !== undefined) lastName = entry.last_name.length > 0 ? entry.last_name : '';
+      else if (entry.Email !== undefined) email = entry.Email.length > 0 ? entry.Email : '';
+      else if (entry.gender !== undefined) gender = entry.gender.length > 0 ? entry.gender : '';
+      else if (entry.profile_key !== undefined && entry.profile_value !== undefined) {
+          profileEntries.push({
+              profile_key: entry.profile_key,
+              profile_value: entry.profile_value,
+          });
+      }
+  }
 
-    return { firstName, lastName, email, gender, profileEntries }
+  return { firstName, lastName, email, gender, profileEntries }
 }
+
+
