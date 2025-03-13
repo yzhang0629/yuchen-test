@@ -57,7 +57,7 @@ export class DbService {
 
     async updateUser(userData: any[]): Promise<any> {
         const {firstName, lastName, email, gender, profileEntries} = parseInput(userData);
-        const userNo = Date.now();      // User number needs to be specified?
+        const userNo = 123456789;      // User number needs to be specified?
         const currTime = new Date();
         const areaCode = '';
         const phoneNumber = '';
@@ -101,8 +101,7 @@ export class DbService {
             currTime,
             currTime,
         ]);
-        const insertedId = (result as any).insertId;
-
+        
         const sqlAttribute = `
             INSERT INTO h_user_attribute (user_no, profile_key, profile_value, show_profile, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -111,7 +110,11 @@ export class DbService {
             const { profile_key, profile_value } = entry;
             let profileValueStr: string;
             try {
-                profileValueStr = JSON.stringify(profile_value);
+                if (profile_value.length == 1) {
+                  profileValueStr = JSON.stringify(profile_value[0]);
+                } else {
+                  profileValueStr = JSON.stringify(profile_value);
+                }
             } catch (e) {
                 profileValueStr = String(profile_value);
             }
@@ -124,7 +127,7 @@ export class DbService {
                 currTime,
             ]);
         }
-        return `id: ${insertedId}`;
+        return result;
     }
 
 }
