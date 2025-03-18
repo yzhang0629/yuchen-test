@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query } from '@nestjs/common';
 import { DifyService } from './dify.service';
 
 @Controller('chat')
@@ -11,7 +11,16 @@ export class DifyController {
     @Body('user') user: string,
     @Body('conversation_id') conversation_id?: string
 ) {
-    const response = await this.difyService.startChatflow(query, user, conversation_id);
+    const response = await this.difyService.chatFlow(query, user, conversation_id);
+    return response;
+  }
+
+  @Get('get-conversation')
+  async getConversation(
+    @Query('user') user: string,
+    @Query('conversation_id') conversation_id: string
+  ) {
+    const response = await this.difyService.getConversation(user, conversation_id);
     return response;
   }
 }
