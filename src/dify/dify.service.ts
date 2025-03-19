@@ -2,6 +2,7 @@ import { Injectable, HttpException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { config } from 'dotenv';
 import { firstValueFrom } from 'rxjs';
+import { q } from '@clerk/clerk-react/dist/useAuth-D1ySo1Ar';
 
 config();
 
@@ -41,7 +42,7 @@ export class DifyService {
             const response = await firstValueFrom(
                 this.httpService.post(this.apiUrl, data, { headers })
             );
-            return response.data;
+            return response.data.answer;
         } catch (error) {
             throw new HttpException(
                 `Dify API request failed: ${error.message}`,
@@ -73,6 +74,16 @@ export class DifyService {
                 error.response?.status || 500,
             );
         }
+    }
+
+    async sendChatMessage(userId : string, query : string, conversation_id ? : string) {
+        if (query == "get_text_message" || query == "get_audio" || query == "get_profile") {
+            return;
+        }
+        const sendMessage = await this.chatFlow(query, userId, conversation_id);
+        console.log(sendMessage);
+        const reply = await this.chatFlow("get_text_message", userId, conversation_id);
+        return reply;
     }
 
 }
