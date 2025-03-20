@@ -33,4 +33,13 @@ export class DifyController {
     const response = await this.difyService.sendChatMessage(user, message, conversation_id);
     return response;
   }
+
+  @Get('get-messages')
+  async getRawMessages(
+    @Query('user') user: string,
+    @Query('conversation_id') conversation_id: string
+  ) {
+    const response = await this.difyService.getRawMessages(user, conversation_id);
+    return response;
+  }
 }

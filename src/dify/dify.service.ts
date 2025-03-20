@@ -67,7 +67,7 @@ export class DifyService {
             const response = await firstValueFrom(
                 this.httpService.get(conversationUrl, { headers })
             );
-            return response.data; // Return the conversation history
+            return response.data.data; // Return the conversation history
         } catch (error) {
             throw new HttpException(
                 `Failed to retrieve conversation history: ${error.message}`,
@@ -80,10 +80,32 @@ export class DifyService {
         if (query == "get_text_message" || query == "get_audio" || query == "get_profile") {
             return;
         }
-        const sendMessage = await this.chatFlow(query, userId, conversation_id);
-        console.log(sendMessage);
+        this.chatFlow(query, userId, conversation_id);
         const reply = await this.chatFlow("get_text_message", userId, conversation_id);
         return reply;
+    }
+
+    async getRawMessages(userId: string, conversationId: string) {
+        const rawData = await this.getConversation(userId, conversationId);
+
+        if (rawData == null || rawData.length === 0) return [];
+
+        const result = rawData.reduce((ans, message) => {
+            if (message.answer === "fill") {
+                ans.push({
+                    role: "user",
+                    content: message.query
+                });
+            } else if (message.query === "get_text_message") {
+                ans.push({
+                    role: "system",
+                    content: message.answer
+                });
+            }
+            return ans;
+        }, []);
+
+        return result;
     }
 
 }
