@@ -2,7 +2,7 @@ import { Injectable, HttpException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { config } from 'dotenv';
 import { firstValueFrom } from 'rxjs';
-import { q } from '@clerk/clerk-react/dist/useAuth-D1ySo1Ar';
+import { Express } from 'express';
 
 config();
 
@@ -23,6 +23,9 @@ export class DifyService {
     async chatFlow(query: string, userId: string, conversation_id?: string): Promise<any> {
         if (!this.apiKey || !this.apiUrl) {
             throw new Error('DIFY_API_KEY or DIFY_CHATFLOW_URL is not set in the .env file');
+        }
+        if (!query || query.trim() == "") {
+            query = "ignore this message, use the message in context";
         }
 
         const headers = {
@@ -98,7 +101,7 @@ export class DifyService {
                 });
             } else if (message.query === "get_text_message") {
                 ans.push({
-                    role: "system",
+                    role: "assistant",
                     content: message.answer
                 });
             }
@@ -107,5 +110,5 @@ export class DifyService {
 
         return result;
     }
-
+    
 }
