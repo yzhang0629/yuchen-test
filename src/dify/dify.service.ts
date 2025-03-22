@@ -9,8 +9,9 @@ config();
 @Injectable()
 export class DifyService {
     private readonly apiKey = process.env.DIFY_API_KEY;
-    private readonly apiUrl = process.env.DIFY_CHATFLOW_URL;
+    private readonly chatFlowUrl = process.env.DIFY_CHATFLOW_URL;
     private readonly chatURL = process.env.DIFY_CHAT;
+    private readonly fileUrl = process.env.DIFY_FILE_URL;
 
     constructor(private readonly httpService: HttpService) {}
 
@@ -21,7 +22,7 @@ export class DifyService {
     a regular chat message with the chatbot, it should return the result of querying get_text_messages.
     */
     async chatFlow(query: string, userId: string, conversation_id?: string): Promise<any> {
-        if (!this.apiKey || !this.apiUrl) {
+        if (!this.apiKey || !this.chatFlowUrl) {
             throw new Error('DIFY_API_KEY or DIFY_CHATFLOW_URL is not set in the .env file');
         }
         if (!query || query.trim() == "") {
@@ -43,7 +44,7 @@ export class DifyService {
 
         try {
             const response = await firstValueFrom(
-                this.httpService.post(this.apiUrl, data, { headers })
+                this.httpService.post(this.chatFlowUrl, data, { headers })
             );
             return response.data.answer;
         } catch (error) {
@@ -110,5 +111,73 @@ export class DifyService {
 
         return result;
     }
+
+    async uploadFile(file: Express.Multer.File) {
+        if (!this.apiKey || !this.fileUrl) {
+            throw new Error('DIFY_API_KEY or DIFY_FILE_URL is not set in the .env file');
+        }
+        const uploadHeaders = {
+            Authorization: `Bearer ${this.apiKey}`,
+            'Content-Type': 'multipart/form-data',
+        };
+        const blob = new Blob([file.buffer], { type: file.mimetype });
+        const formData = new FormData();
+        formData.append('file', blob, file.originalname);
+
+        let uploadFileId: string;
+
+        try {
+            const uploadResponse = await firstValueFrom(
+                this.httpService.post(this.fileUrl, formData, { headers: uploadHeaders })
+            );
+            uploadFileId = uploadResponse.data.id;
+        } catch (error) {
+            throw new HttpException(
+                `Failed to upload audio file: ${error.message}`,
+                error.response?.status || 500,
+            );
+        }
+        return uploadFileId;
+    }
+
+    async sendAudioFile(userId: string, file: Express.Multer.File, conversation_id?: string) {
+        if (!this.apiKey || !this.chatFlowUrl) {
+            throw new Error('DIFY_API_KEY or DIFY_CHATFLOW_URL is not set in the .env file');
+        }
     
+        const headers = {
+            Authorization: `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+        };
+    
+        const fileId = await this.uploadFile(file);
+        console.log(fileId);
+        const chatData = {
+            inputs: {},
+            query: "This is my answer",
+            response_mode: 'blocking',
+            conversation_id: conversation_id || '',
+            user: userId,
+            files: [
+                {
+                    type: 'audio',
+                    transfer_method: 'local_file',
+                    upload_file_id: fileId,
+                },
+            ],
+        };
+        try {
+            const chatResponse = await firstValueFrom(
+                this.httpService.post(this.chatFlowUrl, chatData, { headers: headers })
+            );
+            console.log(chatResponse.data.answer);
+            const reply = await this.chatFlow("get_text_message", userId, conversation_id);
+            return reply;
+        } catch (error) {
+            throw new HttpException(
+                `Failed to send chat message: ${error.message}`,
+                error.response?.status || 500,
+            );
+        }
+    }
 }
