@@ -3,6 +3,8 @@ import { HttpService } from '@nestjs/axios';
 import { config } from 'dotenv';
 import { firstValueFrom } from 'rxjs';
 import { Express } from 'express';
+import axios from 'axios';
+
 
 config();
 
@@ -21,7 +23,7 @@ export class DifyService {
     For instance, whenever a user sends anything else than these three, then by default it is
     a regular chat message with the chatbot, it should return the result of querying get_text_messages.
     */
-    async chatFlow(query: string, userId: string, conversation_id?: string): Promise<any> {
+    async chatFlow(query: string, userId: string, response_mode : string, conversation_id?: string): Promise<any> {
         if (!this.apiKey || !this.chatFlowUrl) {
             throw new Error('DIFY_API_KEY or DIFY_CHATFLOW_URL is not set in the .env file');
         }
@@ -38,7 +40,7 @@ export class DifyService {
             inputs: {},
             query,
             user: userId,
-            response_mode: 'blocking',
+            response_mode: response_mode,
             conversation_id,
         };
 
@@ -46,6 +48,17 @@ export class DifyService {
             const response = await firstValueFrom(
                 this.httpService.post(this.chatFlowUrl, data, { headers })
             );
+            if (query == "get_audio_message") {
+                const audioUrl = response.data.answer.substring(response.data.answer.indexOf('(') + 1, response.data.answer.indexOf(')'));
+                console.log(audioUrl);
+                const audioResponse = await firstValueFrom(
+                    this.httpService.get(audioUrl, { responseType: 'arraybuffer' })
+                );
+                console.log(audioResponse);
+                const audioFile = Buffer.from(audioResponse.data).toString('base64');
+                // console.log("audioFile:", audioFile);
+                return audioFile;
+            }
             return response.data.answer;
         } catch (error) {
             throw new HttpException(
@@ -80,36 +93,21 @@ export class DifyService {
         }
     }
 
-    async sendChatMessage(userId : string, query : string, conversation_id ? : string) {
-        if (query == "get_text_message" || query == "get_audio" || query == "get_profile") {
+    async sendChatMessage(userId : string, query : string, response_mode : string, conversation_id ? : string) {
+        if (query == "get_text_message" || query == "get_audio_message" || query == "get_profile") {
             return;
         }
-        this.chatFlow(query, userId, conversation_id);
-        const reply = await this.chatFlow("get_text_message", userId, conversation_id);
+        const response = await this.chatFlow(query, userId, response_mode, conversation_id);
+        // console.log("send chat message reply: ", response);
+        const reply = await this.chatFlow("get_text_message", userId, response_mode, conversation_id);
+        // console.log("get text message reply: ", response);
         return reply;
     }
 
-    async getRawMessages(userId: string, conversationId: string) {
-        const rawData = await this.getConversation(userId, conversationId);
+    async getRawMessages(userId: string, response_mode : string, conversationId: string) {
+        const rawData = await this.chatFlow("get_chat_history", userId, response_mode, conversationId);
 
-        if (rawData == null || rawData.length === 0) return [];
-
-        const result = rawData.reduce((ans, message) => {
-            if (message.answer === "fill") {
-                ans.push({
-                    role: "user",
-                    content: message.query
-                });
-            } else if (message.query === "get_text_message") {
-                ans.push({
-                    role: "assistant",
-                    content: message.answer
-                });
-            }
-            return ans;
-        }, []);
-
-        return result;
+        return rawData;
     }
 
     async uploadFile(file: Express.Multer.File) {
@@ -140,7 +138,7 @@ export class DifyService {
         return uploadFileId;
     }
 
-    async sendAudioFile(userId: string, file: Express.Multer.File, conversation_id?: string) {
+    async sendAudioFile(userId: string, file: Express.Multer.File, response_mode : string, conversation_id?: string) {
         if (!this.apiKey || !this.chatFlowUrl) {
             throw new Error('DIFY_API_KEY or DIFY_CHATFLOW_URL is not set in the .env file');
         }
@@ -151,7 +149,6 @@ export class DifyService {
         };
     
         const fileId = await this.uploadFile(file);
-        console.log(fileId);
         const chatData = {
             inputs: {},
             query: "This is my answer",
@@ -170,8 +167,8 @@ export class DifyService {
             const chatResponse = await firstValueFrom(
                 this.httpService.post(this.chatFlowUrl, chatData, { headers: headers })
             );
-            console.log(chatResponse.data.answer);
-            const reply = await this.chatFlow("get_text_message", userId, conversation_id);
+            console.log("chat response: ", chatResponse);
+            const reply = await this.chatFlow("get_text_message", userId, response_mode, conversation_id);
             return reply;
         } catch (error) {
             throw new HttpException(

@@ -8,12 +8,13 @@ export class DifyController {
   constructor(private readonly difyService: DifyService) {}
 
   @Post()
-  async initiateChat(
+  async chatFlow(
     @Body('query') query: string, 
     @Body('user') user: string,
+    @Body('response_mode') response_mode: string,
     @Body('conversation_id') conversation_id?: string
 ) {
-    const response = await this.difyService.chatFlow(query, user, conversation_id);
+    const response = await this.difyService.chatFlow(query, user, response_mode, conversation_id);
     return response;
   }
 
@@ -30,18 +31,20 @@ export class DifyController {
   async sendChatMessage(
     @Body('user') user: string,
     @Body('message') message: string,
+    @Body('response_mode') response_mode: string,
     @Body('conversation_id') conversation_id: string
   ) {
-    const response = await this.difyService.sendChatMessage(user, message, conversation_id);
+    const response = await this.difyService.sendChatMessage(user, message, response_mode, conversation_id);
     return response;
   }
 
   @Get('get-messages')
   async getRawMessages(
     @Query('user') user: string,
+    @Query('response_mode') response_mode: string,
     @Query('conversation_id') conversation_id: string
   ) {
-    const response = await this.difyService.getRawMessages(user, conversation_id);
+    const response = await this.difyService.getRawMessages(user, response_mode, conversation_id);
     return response;
   }
 
@@ -59,9 +62,10 @@ export class DifyController {
   async sendAudioFile(
     @Body('user') user: string,
     @UploadedFile() file: Express.Multer.File,
+    @Body('response_mode') response_mode: string,
     @Body('conversation_id') conversation_id?: string
   ) {
-    const response = await this.difyService.sendAudioFile(user, file, conversation_id);
+    const response = await this.difyService.sendAudioFile(user, file, response_mode, conversation_id);
     return response;
   }
 }
