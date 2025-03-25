@@ -4,7 +4,7 @@ import { config } from 'dotenv';
 import { firstValueFrom } from 'rxjs';
 import { Express } from 'express';
 import axios from 'axios';
-
+import OpenAI from 'openai';
 
 config();
 
@@ -14,6 +14,10 @@ export class DifyService {
     private readonly chatFlowUrl = process.env.DIFY_CHATFLOW_URL;
     private readonly chatURL = process.env.DIFY_CHAT;
     private readonly fileUrl = process.env.DIFY_FILE_URL;
+    private readonly openaiClient = new OpenAI({
+        organization: "org-bVyC8WWhjB6c8OIKFp73PhO7",
+        apiKey: process.env.keyword
+    });
 
     constructor(private readonly httpService: HttpService) {}
 
@@ -45,20 +49,27 @@ export class DifyService {
         };
 
         try {
+            const startTime = Date.now();
             const response = await firstValueFrom(
                 this.httpService.post(this.chatFlowUrl, data, { headers })
             );
+            
             if (query == "get_audio_message") {
                 const audioUrl = response.data.answer.substring(response.data.answer.indexOf('(') + 1, response.data.answer.indexOf(')'));
-                console.log(audioUrl);
+                const gotUrl = Date.now();
+                console.log("got audio:", gotUrl - startTime);
                 const audioResponse = await firstValueFrom(
                     this.httpService.get(audioUrl, { responseType: 'arraybuffer' })
                 );
-                console.log(audioResponse);
+                const gotBuffer = Date.now();
+                console.log("got buffer:", gotBuffer - gotUrl);
                 const audioFile = Buffer.from(audioResponse.data).toString('base64');
-                // console.log("audioFile:", audioFile);
+                const gotBase64 = Date.now();
+                console.log("get_audio_message execution time: ", gotBase64 - gotBuffer);
                 return audioFile;
             }
+            const endTime = Date.now();
+            // console.log("query execution time: ", endTime - startTime);
             return response.data.answer;
         } catch (error) {
             throw new HttpException(
@@ -94,13 +105,20 @@ export class DifyService {
     }
 
     async sendChatMessage(userId : string, query : string, response_mode : string, conversation_id ? : string) {
+        const start = Date.now();
         if (query == "get_text_message" || query == "get_audio_message" || query == "get_profile") {
             return;
         }
         const response = await this.chatFlow(query, userId, response_mode, conversation_id);
-        // console.log("send chat message reply: ", response);
+        const gotResponse = Date.now();
+        console.log("chatflow execution time: ", gotResponse - start);
         const reply = await this.chatFlow("get_text_message", userId, response_mode, conversation_id);
-        // console.log("get text message reply: ", response);
+        const gotMessage = Date.now();
+        console.log("get message execution time: ", gotMessage - gotResponse);
+        const audio = await this.getAudio(reply);
+        const gotAudio = Date.now();
+        console.log("get audio execution time: ", gotAudio - gotMessage);
+        console.log("content: ", audio);
         return reply;
     }
 
@@ -173,6 +191,24 @@ export class DifyService {
         } catch (error) {
             throw new HttpException(
                 `Failed to send chat message: ${error.message}`,
+                error.response?.status || 500,
+            );
+        }
+    }
+
+    async getAudio(text: string): Promise<Buffer> {
+        try {
+            const response = await this.openaiClient.audio.speech.create({
+                model: 'tts-1',
+                voice: 'nova',
+                input: text,
+            });
+
+            const arrayBuffer = await response.arrayBuffer();
+            return Buffer.from(arrayBuffer);
+        } catch (error) {
+            throw new HttpException(
+                `Failed to generate audio: ${error.message}`,
                 error.response?.status || 500,
             );
         }
