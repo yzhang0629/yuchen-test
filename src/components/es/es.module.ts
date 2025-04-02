@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ElasticsearchModule } from '@nestjs/elasticsearch';
-import { SearchService } from './es.service';
-import { SearchController } from './es.controller';
+import { ElasticSearchService } from './es.service';
+import { ElasticSearchController } from './es.controller';
 import { config } from 'dotenv';
 
 config();
@@ -15,7 +15,8 @@ config();
       },
     }),
   ],
-  providers: [SearchService],
-  controllers: [SearchController],
+  providers: [ElasticSearchService],
+  controllers: [ElasticSearchController],
+  exports: [ElasticSearchService, ElasticsearchModule],
 })
 export class SearchModule {}

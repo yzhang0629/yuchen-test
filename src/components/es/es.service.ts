@@ -2,8 +2,8 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 
 @Injectable()
-export class SearchService {
-    private readonly logger = new Logger(SearchService.name);
+export class ElasticSearchService {
+    private readonly logger = new Logger(ElasticSearchService.name);
 
     constructor(private readonly esService: ElasticsearchService) {}
 

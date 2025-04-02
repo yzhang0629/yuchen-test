@@ -7,6 +7,6 @@ import { VapiController } from "./vapi.controller";
   imports: [HttpModule],
   controllers: [VapiController],
   providers: [VapiService],
-  exports: [],
+  exports: [VapiService],
 })
 export class VapiModule {}

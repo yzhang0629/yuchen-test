@@ -1,10 +1,10 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { SearchService } from './es.service';
+import { ElasticSearchService } from './es.service';
 
 
 @Controller('search')
-    export class SearchController {
-    constructor(private readonly searchService: SearchService) {}
+    export class ElasticSearchController {
+    constructor(private readonly searchService: ElasticSearchService) {}
 
     @Get('test-connection')
     async testConnection() {

@@ -8,7 +8,7 @@ config();
 Injectable()
 export class VapiService {
     private readonly VAPI_API_KEY = process.env.VAPI_API_KEY;
-    constructor(private readonly httpService: HttpService) {}
+    constructor(private readonly vapiService: VapiService) {}
     async getAllCalls(): Promise<any[]> {
         if (!this.VAPI_API_KEY) {
             throw new Error('VAPI_API_KEY is not set in the .env file');

@@ -9,6 +9,6 @@ import { ConfigModule } from "@nestjs/config";
   }),],
   providers: [DbService],
   controllers: [DbController],
-  exports: [],
+  exports: [DbService],
 })
 export class DbModule {}

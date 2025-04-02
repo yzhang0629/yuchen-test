@@ -7,6 +7,6 @@ import { HttpModule } from '@nestjs/axios';
   imports: [HttpModule],
   controllers: [DifyController],
   providers: [DifyService],
-  exports: [],
+  exports: [DifyService, DifyController],
 })
 export class DifyModule {}

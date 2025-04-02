@@ -19,7 +19,7 @@ export class DbService {
             connectionLimit: 10
         });
         await this.pool.query('SELECT 1')
-        console.log('MySQL pool created successfully');
+        // console.log('MySQL pool created successfully');
     }
     async onModuleDestroy() {
         await this.pool.end();
