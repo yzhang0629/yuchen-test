@@ -46,7 +46,17 @@ export class VapiService {
         }
         try {
             const client = new VapiClient({ token: this.VAPI_API_KEY });
-            const result = (await client.calls.get(call_id)).analysis?.structuredData;
+            const result = (await client.calls.get(call_id)).analysis?.structuredData || {};
+            if (typeof result.Ethnicity === 'string') {
+                result.Ethnicity = result.Ethnicity.split(', ');
+            } else {
+                result.Ethnicity = [];
+            }
+            if (typeof result.DatingTargetPreferences === 'string') {
+                result.DatingTargetPreferences = result.DatingTargetPreferences.split(', ');
+            } else {
+                result.DatingTargetPreferences = [];
+            }
             return result;
        } catch (error) {}
     }
